@@ -11,7 +11,7 @@ Notion のカレンダーに日本の祝日をインポートするためのス�
 3. `.env`ファイルを`.env.sample`をコピーして作成します。  
   `cp .env.sample .env`
 4. コマンドライン実行します。  
-   `go run main.go -token=<Internal Integration Token> -database-id=<database_id> -year=2022
+   `./notion-japan-syukujitsu-importer -token=<Internal Integration Token> -database-id=<database_id> -year=2022
   `
 
 ## 注意
