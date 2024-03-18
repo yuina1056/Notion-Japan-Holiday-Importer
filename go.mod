@@ -4,7 +4,6 @@ go 1.22.1
 
 require (
 	github.com/dstotijn/go-notion v0.11.0
-	github.com/joho/godotenv v1.5.1
 	golang.org/x/text v0.14.0
 )
 
