@@ -13,6 +13,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/cheggaaa/pb/v3"
 	"github.com/dstotijn/go-notion"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
@@ -53,7 +54,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("success![year:%d]\n", *year)
+	fmt.Printf("[success] %d年の祝日データの登録が完了しました。 \n", *year)
 	os.Exit(0)
 }
 
@@ -76,6 +77,11 @@ func NotionDBSyukujitsuImporter(year int, token string, NotionDatabaseID string,
 			createHolidays = append(createHolidays, holiday)
 		}
 	}
+	if len(createHolidays) == 0 {
+		return fmt.Errorf("[error] %d年の祝日データが存在しません。csvに対象年のデータがあるか確認してください。", year)
+	}
+	bar := pb.Simple.Start(len(createHolidays))
+	bar.SetMaxWidth(80)
 	for _, holiday := range createHolidays {
 		holidayName := holiday.Name
 		if holidayName == "休日" {
@@ -95,7 +101,9 @@ func NotionDBSyukujitsuImporter(year int, token string, NotionDatabaseID string,
 		}); err != nil {
 			return err
 		}
+		bar.Increment()
 	}
+	bar.Finish()
 	return nil
 }
 
