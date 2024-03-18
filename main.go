@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"encoding/csv"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"net/http"
@@ -13,7 +14,6 @@ import (
 	"time"
 
 	"github.com/dstotijn/go-notion"
-	"github.com/joho/godotenv"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
 )
@@ -33,8 +33,22 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-	godotenv.Load(".env")
-	if err := NotionDBSyukujitsuImporter(*year, *token, *databaseID); err != nil {
+
+	file, err := os.Open("setting.json")
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+	defer file.Close()
+
+	decoder := json.NewDecoder(file)
+	config := Config{}
+	if err := decoder.Decode(&config); err != nil {
+		fmt.Println("Error decoding JSON:", err)
+		os.Exit(1)
+	}
+
+	if err := NotionDBSyukujitsuImporter(*year, *token, *databaseID, config); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -43,8 +57,16 @@ func main() {
 	os.Exit(0)
 }
 
-func NotionDBSyukujitsuImporter(year int, token string, NotionDatabaseID string) error {
-	holidays, err := GetHolidays()
+type Config struct {
+	SourceSyukujitsuURL string `json:"sourceSyukujitsuURL"`
+	NotionProperties    struct {
+		Title string `json:"title"`
+		Date  string `json:"date"`
+	} `json:"notionProperties"`
+}
+
+func NotionDBSyukujitsuImporter(year int, token string, NotionDatabaseID string, config Config) error {
+	holidays, err := GetHolidays(config.SourceSyukujitsuURL)
 	if err != nil {
 		return err
 	}
@@ -60,12 +82,12 @@ func NotionDBSyukujitsuImporter(year int, token string, NotionDatabaseID string)
 			holidayName = "振替休日"
 		}
 		if err := CreateNotionDatabasePage(token, NotionDatabaseID, notion.DatabasePageProperties{
-			"名前": notion.DatabasePageProperty{
+			config.NotionProperties.Title: notion.DatabasePageProperty{
 				Title: []notion.RichText{
 					{Text: &notion.Text{Content: holidayName}},
 				},
 			},
-			"日付": notion.DatabasePageProperty{
+			config.NotionProperties.Date: notion.DatabasePageProperty{
 				Date: &notion.Date{
 					Start: notion.NewDateTime(holiday.Date, false),
 				},
@@ -82,9 +104,9 @@ type Holiday struct {
 	Name string
 }
 
-func GetHolidays() ([]Holiday, error) {
+func GetHolidays(sourceURL string) ([]Holiday, error) {
 	// HTTP GETリクエストを送信してCSVデータを取得
-	response, err := http.Get(os.Getenv("SYUKUJITSU_CSV_URL"))
+	response, err := http.Get(sourceURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch CSV data: %v", err)
 	}
