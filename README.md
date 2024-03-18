@@ -14,7 +14,7 @@ Notion のデータベースに日本の祝日をインポートするための�
   指定方法はNotionの公式ドキュメントを参照してください。  
   <https://www.notion.so/ja-jp/help/add-and-manage-connections-with-the-api>
 4. コマンドライン実行します。  
-   `./notion-japan-syukujitsu-importer -token=<Internal Integration Token> -database-id=<database_id> -year=2022`
+   `./notion-japan-syukujitsu-importer -token=<Internal Integration Token> -database-id=<database_id> -year=2022`  
   `-token`には取得した`Internal Integration Token`を指定してください。  
   `-database-id`には対象のデータベースのIDを指定してください。  
   `-year`には作成したい年を指定してください。
